@@ -683,9 +683,9 @@ declare class AsyncWebAssemblyModulesPlugin {
 		renderContext: WebAssemblyRenderContext,
 		hooks: CompilationHooksAsyncWebAssemblyModulesPlugin
 	): Source;
-	static getCompilationHooks: (compilation: Compilation) => {
-		renderModuleContent: SyncWaterfallHook<any, any>;
-	};
+	static getCompilationHooks: (
+		compilation: Compilation
+	) => CompilationHooksAsyncWebAssemblyModulesPlugin;
 }
 declare interface AsyncWebAssemblyModulesPluginOptions {
 	/**
@@ -2897,9 +2897,15 @@ declare class CleanPlugin {
 	 * Applies the plugin by registering its hooks on the compiler.
 	 */
 	apply(compiler: Compiler): void;
-	static getCompilationHooks: (compilation: Compilation) => {
-		keep: SyncBailHook<any, any>;
-	};
+	static getCompilationHooks: (
+		compilation: Compilation
+	) => CleanPluginCompilationHooks;
+}
+declare interface CleanPluginCompilationHooks {
+	/**
+	 * when returning true the file/directory will be kept during cleaning, returning false will clean it and ignore the following plugins and config
+	 */
+	keep: SyncBailHook<[string], boolean | void>;
 }
 declare interface ClearCacheOptions {
 	/**
@@ -4022,6 +4028,13 @@ declare interface CompilationHooksJavascriptModulesPlugin {
 		[Chunk, RenderContextJavascriptModulesPlugin],
 		boolean | void
 	>;
+}
+declare interface CompilationHooksModuleFederationPlugin {
+	addContainerEntryDependency: SyncHook<Dependency>;
+	addFederationRuntimeDependency: SyncHook<Dependency>;
+}
+declare interface CompilationHooksRealContentHashPlugin {
+	updateHash: SyncBailHook<[Buffer[], string], string | void>;
 }
 
 /**
@@ -5372,12 +5385,9 @@ declare interface CssImportDependencyMeta {
 type CssLayer = undefined | string;
 declare class CssLoadingRuntimeModule extends RuntimeModule {
 	constructor(runtimeRequirements: ReadonlySet<string>);
-	static getCompilationHooks: (compilation: Compilation) => {
-		createStylesheet: SyncWaterfallHook<any, any>;
-		linkPreload: SyncWaterfallHook<any, any>;
-		linkPrefetch: SyncWaterfallHook<any, any>;
-		linkInsert: SyncWaterfallHook<any, any>;
-	};
+	static getCompilationHooks: (
+		compilation: Compilation
+	) => CssLoadingRuntimeModulePluginHooks;
 
 	/**
 	 * Runtime modules without any dependencies to other runtime modules
@@ -5404,6 +5414,12 @@ declare class CssLoadingRuntimeModule extends RuntimeModule {
 	 * @deprecated In webpack 6, call getSourceBasicTypes() directly on the module instance instead of using this static method.
 	 */
 	static getSourceBasicTypes(module: Module): ReadonlySet<string>;
+}
+declare interface CssLoadingRuntimeModulePluginHooks {
+	createStylesheet: SyncWaterfallHook<[string, Chunk], string>;
+	linkPreload: SyncWaterfallHook<[string, Chunk], string>;
+	linkPrefetch: SyncWaterfallHook<[string, Chunk], string>;
+	linkInsert: SyncWaterfallHook<[string, Chunk], string>;
 }
 declare abstract class CssModule extends NormalModule {
 	cssLayer: CssLayer;
@@ -5590,11 +5606,9 @@ declare class CssModulesPlugin {
 	 * Returns true, when the chunk has css.
 	 */
 	static chunkHasCss(chunk: Chunk, chunkGraph: ChunkGraph): boolean;
-	static getCompilationHooks: (compilation: Compilation) => {
-		renderModulePackage: SyncWaterfallHook<any, any>;
-		chunkHash: SyncHook<any>;
-		orderModules: SyncBailHook<any, any>;
-	};
+	static getCompilationHooks: (
+		compilation: Compilation
+	) => CompilationHooksCssModulesPlugin;
 }
 declare abstract class CssParser extends ParserClass {
 	defaultMode: "global" | "auto" | "local" | "pure";
@@ -5731,9 +5745,13 @@ declare class DefinePlugin {
 		}) => CodeValuePrimitive,
 		options?: true | string[] | RuntimeValueOptions
 	): RuntimeValue;
-	static getCompilationHooks: (compilation: Compilation) => {
-		definitions: SyncWaterfallHook<any, any>;
-	};
+	static getCompilationHooks: (compilation: Compilation) => DefinePluginHooks;
+}
+declare interface DefinePluginHooks {
+	definitions: SyncWaterfallHook<
+		[Record<string, CodeValue>],
+		Record<string, CodeValue>
+	>;
 }
 declare interface Definitions {
 	[index: string]: CodeValue;
@@ -8082,9 +8100,7 @@ declare class ExternalModule extends Module {
 		unsafeCacheData: UnsafeCacheData,
 		normalModuleFactory: NormalModuleFactory
 	): void;
-	static getCompilationHooks: (compilation: Compilation) => {
-		chunkCondition: SyncBailHook<any, any>;
-	};
+	static getCompilationHooks: (compilation: Compilation) => ExternalModuleHooks;
 	static ModuleExternalInitFragment: typeof ModuleExternalInitFragment;
 	static getExternalModuleNodeCommonjsInitFragment: (
 		runtimeTemplate: RuntimeTemplate,
@@ -8100,6 +8116,9 @@ declare class ExternalModule extends Module {
 type ExternalModuleBuildInfo = KnownBuildInfo &
 	Record<string, any> &
 	KnownExternalModuleBuildInfo;
+declare interface ExternalModuleHooks {
+	chunkCondition: SyncBailHook<[Chunk, Compilation], boolean>;
+}
 declare interface ExternalModuleInfo {
 	type: "external";
 	module: Module;
@@ -10382,22 +10401,9 @@ declare class JavascriptModulesPlugin {
 		chunk: Chunk,
 		outputOptions: OutputNormalizedWithDefaults
 	): ChunkFilenameTemplate;
-	static getCompilationHooks: (compilation: Compilation) => {
-		renderModuleContent: SyncWaterfallHook<any, any>;
-		renderModuleContainer: SyncWaterfallHook<any, any>;
-		renderModulePackage: SyncWaterfallHook<any, any>;
-		render: SyncWaterfallHook<any, any>;
-		renderContent: SyncWaterfallHook<any, any>;
-		renderStartup: SyncWaterfallHook<any, any>;
-		renderChunk: SyncWaterfallHook<any, any>;
-		renderMain: SyncWaterfallHook<any, any>;
-		renderRequire: SyncWaterfallHook<any, any>;
-		inlineInRuntimeBailout: SyncBailHook<any, any>;
-		embedInRuntimeBailout: SyncBailHook<any, any>;
-		strictRuntimeBailout: SyncBailHook<any, any>;
-		chunkHash: SyncHook<any>;
-		useSourceMap: SyncBailHook<any, any>;
-	};
+	static getCompilationHooks: (
+		compilation: Compilation
+	) => CompilationHooksJavascriptModulesPlugin;
 	static chunkHasJs: (chunk: Chunk, chunkGraph: ChunkGraph) => boolean;
 }
 declare class JavascriptParser extends ParserClass {
@@ -12799,10 +12805,9 @@ type JsonValueTypes =
 	| JsonValueTypes[];
 declare class JsonpChunkLoadingRuntimeModule extends RuntimeModule {
 	constructor(runtimeRequirements: ReadonlySet<string>);
-	static getCompilationHooks: (compilation: Compilation) => {
-		linkPreload: SyncWaterfallHook<any, any>;
-		linkPrefetch: SyncWaterfallHook<any, any>;
-	};
+	static getCompilationHooks: (
+		compilation: Compilation
+	) => JsonpCompilationPluginHooks;
 
 	/**
 	 * Runtime modules without any dependencies to other runtime modules
@@ -13924,11 +13929,14 @@ declare interface LimitChunkCountPluginOptions {
 	 */
 	maxChunks: number;
 }
+declare interface LoadScriptCompilationHooks {
+	createScript: SyncWaterfallHook<[string, Chunk], string>;
+}
 declare class LoadScriptRuntimeModule extends HelperRuntimeModule {
 	constructor(withCreateScriptUrl?: boolean, withFetchPriority?: boolean);
-	static getCompilationHooks: (compilation: Compilation) => {
-		createScript: SyncWaterfallHook<any, any>;
-	};
+	static getCompilationHooks: (
+		compilation: Compilation
+	) => LoadScriptCompilationHooks;
 
 	/**
 	 * Runtime modules without any dependencies to other runtime modules
@@ -14414,7 +14422,7 @@ declare abstract class MainTemplate {
 		localVars: SyncWaterfallHook<[string, Chunk, string], string>;
 		requireExtensions: SyncWaterfallHook<[string, Chunk, string], string>;
 		requireEnsure: SyncWaterfallHook<[string, Chunk, string, string], string>;
-		get jsonpScript(): SyncWaterfallHook<any, any>;
+		get jsonpScript(): SyncWaterfallHook<[string, Chunk], string>;
 		get linkPrefetch(): SyncWaterfallHook<[string, Chunk], string>;
 		get linkPreload(): SyncWaterfallHook<[string, Chunk], string>;
 	}>;
@@ -15089,10 +15097,9 @@ declare class ModuleChunkLoadingRuntimeModule extends RuntimeModule {
 	 * Creates an instance of ModuleChunkLoadingRuntimeModule.
 	 */
 	constructor(runtimeRequirements: ReadonlySet<string>);
-	static getCompilationHooks: (compilation: Compilation) => {
-		linkPreload: SyncWaterfallHook<any, any>;
-		linkPrefetch: SyncWaterfallHook<any, any>;
-	};
+	static getCompilationHooks: (
+		compilation: Compilation
+	) => JsonpCompilationPluginHooks;
 
 	/**
 	 * Runtime modules without any dependencies to other runtime modules
@@ -15278,10 +15285,9 @@ declare class ModuleFederationPlugin {
 	 * Applies the plugin by registering its hooks on the compiler.
 	 */
 	apply(compiler: Compiler): void;
-	static getCompilationHooks: (compilation: Compilation) => {
-		addContainerEntryDependency: SyncHook<any>;
-		addFederationRuntimeDependency: SyncHook<any>;
-	};
+	static getCompilationHooks: (
+		compilation: Compilation
+	) => CompilationHooksModuleFederationPlugin;
 }
 declare interface ModuleFederationPluginOptions {
 	/**
@@ -20426,9 +20432,9 @@ declare class RealContentHashPlugin {
 	 * Applies the plugin by registering its hooks on the compiler.
 	 */
 	apply(compiler: Compiler): void;
-	static getCompilationHooks: (compilation: Compilation) => {
-		updateHash: SyncBailHook<any, any>;
-	};
+	static getCompilationHooks: (
+		compilation: Compilation
+	) => CompilationHooksRealContentHashPlugin;
 }
 declare interface RealContentHashPluginOptions {
 	/**
